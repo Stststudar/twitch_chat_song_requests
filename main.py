@@ -143,10 +143,10 @@ async def download_song_request(message, video_id):
     # Verfiy that !song code is valid
 
     # Regular expression pattern for valid YouTube video codes
-    code_pattern = r'\b([A-Za-z0-9_-]{11})\b'
+    code_pattern = r'([A-Za-z0-9_-]{11})'
 
     # Search for valid YouTube video codes in the message content
-    code_match = re.search(code_pattern, video_id)
+    code_match = re.search(code_pattern, video_id, re.IGNORECASE)
 
     if not code_match:
         # Invalid input, handle it accordingly
@@ -169,7 +169,6 @@ async def download_song_request(message, video_id):
     if result:
         # Video has already been downloaded, link user to the video ID
         cursor.execute("INSERT INTO users (username, video_id) VALUES (?, ?)", (message.author.name, video_id))
-        print("Song downloaded already")
     else:
         # Download the song based on the video ID
         output_path = await download_video_as_mp3(video_id)
@@ -222,7 +221,7 @@ class Bot(twitchio.Client):
             await ban_song()
 
         # Check for a song request
-        pattern = r'!song\s+(\w+)'
+        pattern = r'!song\s+([A-Za-z0-9_-]+)'
         match = re.search(pattern, message.content)
         if match:
             # Extract the YouTube video ID from the matched pattern
@@ -250,12 +249,10 @@ class Bot(twitchio.Client):
                 # Pull all chatters inside a channel
                 channel = self.get_channel('Stststudar')
                 connected_users = [chatter.name for chatter in channel.chatters]
-                print(f'Connected users: {", ".join(connected_users)}')
                 random.shuffle(connected_users)
 
                 # Loop through all chatters
                 for user in connected_users:
-                    print("searching user %s for current song" % (user))
                     cursor.execute("SELECT video_id FROM users WHERE username = ?", (user,))
                     results = cursor.fetchall()
 
@@ -310,7 +307,6 @@ class Bot(twitchio.Client):
                         # Get the number of .mp3 files
                         num_of_songs = len(mp3_files)
                         # Remove the oldest song in the list once all other songs have been played
-                        print("Number of songs:", num_of_songs)
                         if len(played_songs) > num_of_songs - 1:
                             played_songs.pop(0)
                         break
